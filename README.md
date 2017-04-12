@@ -1,2 +1,2 @@
-# flow-table
-Generic flow table implementation
+# c_json
+Parser from json string to c variables.
