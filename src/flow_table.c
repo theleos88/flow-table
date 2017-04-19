@@ -33,7 +33,7 @@ int insert_element(flow_table_t *table, void* element, int size, uint32_t (*hash
 
 	uint32_t h = ((int)( (*hash )( (uint8_t*)(element), size)));
 	char choice;
-	int index = h % table->n_elements;
+	int index = h % table->max_elements;
 
 	index_line_t *line = &((*table->in)[index]);
 	flow_node_t *flow;

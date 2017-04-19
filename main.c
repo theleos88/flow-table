@@ -60,9 +60,9 @@ int main(int argc, char** argv){
 	flow_table_t *flowtable;
 	create_table(&flowtable, 10, sizeof(flow_t));
 
-	printf("Ipsrc: %d - Index: %d\n",f1.ipsrc, ( hash( (uint8_t*)&f1, sizeof(f1))  ) % flowtable->nentries);
-	printf("Ipsrc: %d - Index: %d\n",f2.ipsrc, ( hash( (uint8_t*)&f2, sizeof(f2))  ) % flowtable->nentries);
-	printf("Ipsrc: %d - Index: %d\n",f3.ipsrc, ( hash( (uint8_t*)&f3, sizeof(f3))  ) % flowtable->nentries);
+	printf("Ipsrc: %d - Index: %d\n",f1.ipsrc, ( hash( (uint8_t*)&f1, sizeof(f1))  ) % flowtable->max_elements);
+	printf("Ipsrc: %d - Index: %d\n",f2.ipsrc, ( hash( (uint8_t*)&f2, sizeof(f2))  ) % flowtable->max_elements);
+	printf("Ipsrc: %d - Index: %d\n",f3.ipsrc, ( hash( (uint8_t*)&f3, sizeof(f3))  ) % flowtable->max_elements);
 
 
 

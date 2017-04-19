@@ -53,4 +53,5 @@ example: $(obj) shared
 	$(CC) $(DEBUG) $(MAIN) -L$(ldir) -I$(hdir) $(LNAME) -o $@
 
 run: example
+	$(shell export LD_LIBRARY_PATH=$(ldir))
 	./$< $(LNAME)
