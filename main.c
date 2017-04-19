@@ -9,8 +9,6 @@ typedef struct n{
 	uint32_t type;
 } flow_t;
 
-#define NEL 240
-
 uint32_t hash(uint8_t *elem, int size){
 	uint32_t h = 0;
 	while(size>0){

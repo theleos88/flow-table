@@ -7,7 +7,8 @@ int create_table(flow_table_t **table, int nentries, int flowsize){
 	/* Maybe I can add malloc if null */
 	*table = ((flow_table_t*) malloc (sizeof(flow_table_t)));
 
-	(*table)->nentries = nentries;
+	(*table)->n_elements = 0;
+	(*table)->max_elements = nentries;
 	(*table)->in = (index_table_t*) malloc(sizeof(index_table_t));
 	(*table)->fl = (entry_table_t*) malloc(  sizeof(entry_table_t) +   (sizeof(flow_node_t) + flowsize - 1)*nentries );
 
@@ -17,99 +18,110 @@ int create_table(flow_table_t **table, int nentries, int flowsize){
 	index_line_t *line = *(*table)->in;
 	for (int i=0; i<nentries;i++){
 		line->busy=0;
+		flow_node_t *n = NODE_POINTER((*table)->fl->payload, i, flowsize );
+		n->next = NODE_POINTER((*table)->fl->payload, INCREMENT(i, nentries) , flowsize );
+		n->previous = NODE_POINTER((*table)->fl->payload, DECREMENT(i, nentries) , flowsize );
 	}
 
 	return 1;
 }
 
 //TODO: Manage timestamps (maybe out of the lib)
-//TODO: optimize the insertion
+//TODO, BUG: Check the line->busy thing. It's buggy
+
 int insert_element(flow_table_t *table, void* element, int size, uint32_t (*hash)(uint8_t*, int)  ){
 
 	uint32_t h = ((int)( (*hash )( (uint8_t*)(element), size)));
-	int index = h % table->nentries;
+	char choice;
+	int index = h % table->n_elements;
 
 	index_line_t *line = &((*table->in)[index]);
+	flow_node_t *flow;
 
 	if (line->busy == 0){
-		line->slot[0].hash = h;
-		line->slot[0].time_stamp = 0;
-		line->slot[0].index = table->fl->last;
-		line->busy = 1;
 
-		table->fl->last = (table->fl->last+1) % table->nentries;
-		flow_node_t *flow = ((flow_node_t*) ((uint8_t*)(table->fl->payload) + line->slot[0].index*(size + sizeof(flow_node_t)-1 )));
+		choice = 'I';
 
-		flow->flow_hash = h;
-		memcpy(flow->payload, element, size);
+		//table->fl->last = (table->fl->last+1) % table->nentries;
+		//flow_node_t *flow = ((flow_node_t*) ((uint8_t*)(table->fl->payload) + line->slot[0].index*(size + sizeof(flow_node_t)-1 )));
 
 	} else {
 		printf ("Not empty\n");
+		
 		for (int i=0; i<line->busy; i++){
 
 			/* Check hash*/
 			if (line->slot[i].hash == h){
 				/* Check value*/
-				printf("Colliding or existing...\n");
-				flow_node_t *flow = ((flow_node_t*) ((uint8_t*)(table->fl->payload) + line->slot[i].index*(size + sizeof(flow_node_t)-1 )));
+				printf("Colliding or existing...\n");				
+				flow = NODE_POINTER(table->fl->payload, line->slot[i].index, size );
 
 				/* Handle existing case*/
 				if( memcmp(flow->payload, element, size ) == 0){
+					choice = 'U';
 					printf("Existing! --- Update\n");
-					return EXISTING;
+					break;
 				} else {
 					printf("False positive\n");
 					continue;
 				}
 			}
 		}
-
-		line->slot[ line->busy ].hash = h;
-		line->slot[ line->busy ].time_stamp = 0;
-		line->slot[ line->busy ].index = table->fl->last;
-
-		table->fl->last = (table->fl->last+1) % table->nentries;
-		flow_node_t *flow = ((flow_node_t*) ((uint8_t*)(table->fl->payload) + line->slot[line->busy].index*(size + sizeof(flow_node_t)-1 )));
-		line->busy = (line->busy+1)%NUM_SLOTS;
-
-		flow->flow_hash = h;
-		memcpy(flow->payload, element, size);
-		printf("New\n");
-
-		return NEWELEM;
 	}
 
-	/* Handle not existing case*/
+	switch( choice ){
+		case 'U' :
+		{
+			/* Update case */
+			flow_node_t *last = NODE_POINTER(table->fl->payload, table->fl->last, size);
+			flow_node_t *first = last->previous;
 
-	return FAILURE;
-}
-
-
-/*
-int init_table(uint32_t index_table[], flow_table_t *fw, int size, int elems){
-	assert(elems <= MAX_NUM_FLOWS);
-
-	int i=0;
-	for (i=0;i<elems;i++)
-	{
-		index_table[i]=0;
-	}
-
-	fw = malloc(elems*(sizeof(flow_table_t) + size));
-
-	return 1;
-}
-
-int show_table(flow_table_t *fw, int size){
-	for (int i=0; i<MAX_NUM_FLOWS;i++){
-		for (int j=0; j<size; j++){
-			if(j%16 == 0){
-				printf("\n");
+			if (flow == first){
+				printf("Updating first element\n");
+				return 1;
 			}
-			printf("%02x",fw[i].payload[j]);
+
+			if ( OFFSET(table->fl->payload, flow) == table->fl->last){
+				printf("Moving last...\n");
+				table->fl->last = OFFSET(table->fl->payload, flow->next);
+			} else {
+				printf("Last: %p, First: %p, Current: %p\n", last, first, flow);
+
+				flow->previous->next = flow->next;
+				flow->next->previous = flow->previous;
+
+				flow->next = last;
+				flow->previous = first;
+
+				first->next = flow;
+				last->previous = flow;
+			}
+
+			break;			
 		}
-		printf("\n\n");
+
+		default :
+		{
+			/* The default case is insert */
+			line->slot[ line->busy ].hash = h;
+			line->slot[ line->busy ].time_stamp = 0;
+			line->slot[ line->busy ].index = table->fl->last;
+
+			line->busy = INCREMENT(line->busy, NUM_SLOTS);
+
+			flow_node_t *flow = NODE_POINTER( table->fl->payload, line->slot[0].index, size );
+			table->fl->last = OFFSET( table->fl->payload, flow->next );
+			flow->flow_hash = h;
+			memcpy(flow->payload, element, size);
+
+			if (table->n_elements != table->max_elements){
+				table->n_elements++;
+			}
+
+			break;			
+		}
+		
 	}
-	printf("*****\n");
+
+	return 0;
 }
-*/
