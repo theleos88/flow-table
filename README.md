@@ -1,2 +1,2 @@
-# c_json
-Parser from json string to c variables.
+# flow_table package
+High speed stateful hash table

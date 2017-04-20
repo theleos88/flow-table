@@ -15,6 +15,7 @@ SHAREDCP = -fPIC
 SHAREDLD = -shared
 LNAME = -lflowtable
 
+CFLAGS = -std=c99
 DEBUG = -ggdb -g
 
 MAIN = main.c
@@ -34,23 +35,23 @@ $(libname): $(obj)
 #	$(CC) -c -I$(hdir)  $< -o $@
 
 $(obj): | odir
-	$(CC) -c $(src) -I$(hdir) -o $@
+	$(CC) $(CFLAGS) -c $(src) -I$(hdir) -o $@
 
 odir:
 	mkdir -p $(odir)
 	mkdir -p $(ldir)
 
 $(objs):
-	$(CC) $(DEBUG) -c $(SHAREDCP) $(src) -I$(hdir) -o $@
+	$(CC) $(CFLAGS) $(DEBUG) -c $(SHAREDCP) $(src) -I$(hdir) -o $@
 
 shared: $(objs)
-	$(CC) $(DEBUG) $(SHAREDLD) -o $(libshared) $(objs)
+	$(CC) $(CFLAGS) $(DEBUG) $(SHAREDLD) -o $(libshared) $(objs)
 
 clean:
 	rm -f $(ldir)/* $(odir)/* example
 
 example: $(obj) shared
-	$(CC) $(DEBUG) $(MAIN) -L$(ldir) -I$(hdir) $(LNAME) -o $@
+	$(CC) $(CFLAGS) $(DEBUG) $(MAIN) -L$(ldir) -I$(hdir) $(LNAME) -o $@
 
 run: example
 	$(shell export LD_LIBRARY_PATH=$(ldir))

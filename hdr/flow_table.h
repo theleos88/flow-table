@@ -11,7 +11,7 @@
 
 #define NODE_POINTER(base, i, size)  ( ((flow_node_t*) ((uint8_t*)(base) + i*(size + sizeof(flow_node_t)-1 ))) )
 //#define OFFSET(startptr, offptr) (  ((int) ((uint8_t*)offptr - (uint8_t*)startptr))/sizeof(uint8_t*)   )
-#define OFFSET(startptr, offptr) (( (int) (( (uint8_t*)offptr - (uint8_t*)startptr)/sizeof(uint8_t*) )))
+#define OFFSET(startptr, offptr) (( (int)  ( ((uint8_t*)(offptr) - (uint8_t*)(startptr)))/(sizeof(flow_node_t)-1 + sizeof(offptr) )  ))
 
 
 #define INCREMENT(i, max_value) ( (i+1) % max_value )

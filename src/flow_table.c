@@ -47,7 +47,7 @@ int insert_element(flow_table_t *table, void* element, int size, uint32_t (*hash
 
 	} else {
 		printf ("Not empty\n");
-		
+
 		for (int i=0; i<line->busy; i++){
 
 			/* Check hash*/
@@ -97,7 +97,7 @@ int insert_element(flow_table_t *table, void* element, int size, uint32_t (*hash
 				last->previous = flow;
 			}
 
-			break;			
+			break;
 		}
 
 		default :
@@ -107,20 +107,21 @@ int insert_element(flow_table_t *table, void* element, int size, uint32_t (*hash
 			line->slot[ line->busy ].time_stamp = 0;
 			line->slot[ line->busy ].index = table->fl->last;
 
-			line->busy = INCREMENT(line->busy, NUM_SLOTS);
-
-			flow_node_t *flow = NODE_POINTER( table->fl->payload, line->slot[0].index, size );
-			table->fl->last = OFFSET( table->fl->payload, flow->next );
+			printf("Put element at %d, last %d\n", line->busy, table->fl->last);
+			flow_node_t *flow = NODE_POINTER( table->fl->payload, line->slot[ line->busy ].index, size );
 			flow->flow_hash = h;
 			memcpy(flow->payload, element, size);
+
+			line->busy = INCREMENT(line->busy, NUM_SLOTS);
+			table->fl->last = OFFSET( table->fl->payload, flow->next );
 
 			if (table->n_elements != table->max_elements){
 				table->n_elements++;
 			}
 
-			break;			
+			break;
 		}
-		
+
 	}
 
 	return 0;

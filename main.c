@@ -41,6 +41,20 @@ int print_test_data(flow_table_t *t){
 
 }
 
+int print_table(flow_table_t *table){
+	printf("ELEMENTS: %d\n", table->n_elements);
+	printf("___\n");
+	flow_node_t *node = NODE_POINTER(table->fl->payload, table->fl->last, sizeof(flow_t) );
+	node = node->previous;
+
+	for (int i=0; i<table->n_elements; i++){
+		flow_t t = *(flow_t*)(node->payload);
+		print_structure(t);
+		node = node->previous;
+	}
+
+}
+
 int main(int argc, char** argv){
 
 	flow_t f1;
@@ -53,6 +67,7 @@ int main(int argc, char** argv){
 
 	flow_t f3 = f1;
 	f3.ipsrc = 66;
+	f3.prtdst = 125;
 
 
 	index_table_t mytable;
@@ -60,13 +75,13 @@ int main(int argc, char** argv){
 	flow_table_t *flowtable;
 	create_table(&flowtable, 10, sizeof(flow_t));
 
+	printf("Sflow_node %d, Sflow_t %d\n", sizeof(flow_node_t), sizeof(flow_t)); getchar();
+
 	printf("Ipsrc: %d - Index: %d\n",f1.ipsrc, ( hash( (uint8_t*)&f1, sizeof(f1))  ) % flowtable->max_elements);
 	printf("Ipsrc: %d - Index: %d\n",f2.ipsrc, ( hash( (uint8_t*)&f2, sizeof(f2))  ) % flowtable->max_elements);
 	printf("Ipsrc: %d - Index: %d\n",f3.ipsrc, ( hash( (uint8_t*)&f3, sizeof(f3))  ) % flowtable->max_elements);
 
-
-
-	printf("HASH insert: %08x\n", insert_element (flowtable, (void*)&f1, sizeof(f1), &hash) );		
+/*
 	printf("HASH insert: %08x\n", insert_element (flowtable, (void*)&f1, sizeof(f1), &hash) );		
 	printf("HASH insert: %08x\n", insert_element (flowtable, (void*)&f1, sizeof(f1), &hash) );		
 	printf("HASH insert: %08x\n", insert_element (flowtable, (void*)&f1, sizeof(f1), &hash) );		
@@ -74,12 +89,15 @@ int main(int argc, char** argv){
 	printf("HASH insert: %08x\n", insert_element (flowtable, (void*)&f1, sizeof(f1), &hash) );		
 	printf("HASH insert: %08x\n", insert_element (flowtable, (void*)&f1, sizeof(f1), &hash) );		
 
+*/
+
+	printf("HASH insert: %08x\n", insert_element (flowtable, (void*)&f1, sizeof(f1), &hash) );		
 	printf("HASH insert: %08x\n", insert_element (flowtable, (void*)&f2, sizeof(f1), &hash) );		
 	printf("HASH insert: %08x\n", insert_element (flowtable, (void*)&f3, sizeof(f1), &hash) );		
 
-
 	print_test_data(flowtable);
-
+	printf("\n\n\n\n\n");
+	print_table(flowtable);
 
 	/*
 	index_node_t *t =&mytable[10][2];
