@@ -42,27 +42,24 @@ int insert_element(flow_table_t *table, void* element, int size, uint32_t (*hash
 
 		choice = 'I';
 
-		//table->fl->last = (table->fl->last+1) % table->nentries;
-		//flow_node_t *flow = ((flow_node_t*) ((uint8_t*)(table->fl->payload) + line->slot[0].index*(size + sizeof(flow_node_t)-1 )));
-
 	} else {
-		printf ("Not empty\n");
+		//printf ("Not empty\n");
 
 		for (int i=0; i<line->busy; i++){
 
 			/* Check hash*/
 			if (line->slot[i].hash == h){
 				/* Check value*/
-				printf("Colliding or existing...\n");				
+				//printf("Colliding or existing...\n");				
 				flow = NODE_POINTER(table->fl->payload, line->slot[i].index, size );
 
 				/* Handle existing case*/
 				if( memcmp(flow->payload, element, size ) == 0){
 					choice = 'U';
-					printf("Existing! --- Update\n");
+					//printf("Existing! --- Update\n");
 					break;
 				} else {
-					printf("False positive\n");
+					//printf("False positive\n");
 					continue;
 				}
 			}
@@ -77,16 +74,15 @@ int insert_element(flow_table_t *table, void* element, int size, uint32_t (*hash
 			flow_node_t *first = last->previous;
 
 			if (flow == first){
-				printf("Updating first element\n");
+				//printf("Updating first element\n");
 				return 1;
 			}
 
 			if ( OFFSET(table->fl->payload, flow) == table->fl->last){
-				printf("Moving last...\n");
+				//printf("Moving last...\n");
 				table->fl->last = OFFSET(table->fl->payload, flow->next);
 			} else {
-				printf("Last: %p, First: %p, Current: %p\n", last, first, flow);
-
+				//printf("Last: %p, First: %p, Current: %p\n", last, first, flow);
 				flow->previous->next = flow->next;
 				flow->next->previous = flow->previous;
 
@@ -107,7 +103,7 @@ int insert_element(flow_table_t *table, void* element, int size, uint32_t (*hash
 			line->slot[ line->busy ].time_stamp = 0;
 			line->slot[ line->busy ].index = table->fl->last;
 
-			printf("Put element at %d, last %d\n", line->busy, table->fl->last);
+			//printf("Put element at %d, last %d\n", line->busy, table->fl->last);
 			flow_node_t *flow = NODE_POINTER( table->fl->payload, line->slot[ line->busy ].index, size );
 			flow->flow_hash = h;
 			memcpy(flow->payload, element, size);
