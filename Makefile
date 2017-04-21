@@ -9,6 +9,9 @@ ldir = $(shell pwd)/lib
 libname = $(ldir)/libflowtable.a
 libshared = $(ldir)/libflowtable.so
 
+INCLUDEDIR = /usr/local/include
+LIBDIR = /usr/local/lib
+
 AR = ar
 CC = gcc
 SHAREDCP = -fPIC
@@ -56,3 +59,8 @@ example: $(obj) shared
 run: example
 	$(shell export LD_LIBRARY_PATH=$(ldir))
 	./$< $(LNAME)
+
+install: shared
+	mkdir -p $(INCLUDEDIR)/flow_table
+	cp $(hdir)/* $(INCLUDEDIR)/flow_table
+	cp $(ldir)/*.so $(LIBDIR)
