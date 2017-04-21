@@ -11,11 +11,14 @@
 
 #define NODE_POINTER(base, i, size)  ( ((flow_node_t*) ((uint8_t*)(base) + i*(size + sizeof(flow_node_t)-1 ))) )
 //#define OFFSET(startptr, offptr) (  ((int) ((uint8_t*)offptr - (uint8_t*)startptr))/sizeof(uint8_t*)   )
-#define OFFSET(startptr, offptr) (( (int)  ( ((uint8_t*)(offptr) - (uint8_t*)(startptr)))/(sizeof(flow_node_t)-1 + sizeof(offptr) )  ))
+#define OFFSET(startptr, offptr, flowsize) (( (int)  ( ((uint8_t*)(offptr) - (uint8_t*)(startptr)))/(sizeof(flow_node_t)-1+ flowsize )  ))
 
 
 #define INCREMENT(i, max_value) ( (i+1) % max_value )
 #define DECREMENT(i, max_value) (((max_value+i-1)%max_value))
+
+
+#define LOG(fmt, ...)  fprintf(stderr, "%d:%s(): " fmt, __LINE__, __func__, ## __VA_ARGS__)
 
 
 /*********************************/
@@ -53,6 +56,7 @@ typedef struct _entry_table_t{
 typedef struct _general{
 	uint16_t n_elements;
 	uint16_t max_elements;
+	uint16_t flow_size;
 	index_table_t *in;
 	entry_table_t *fl;
 } flow_table_t;

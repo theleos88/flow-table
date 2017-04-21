@@ -9,6 +9,7 @@ int create_table(flow_table_t **table, int nentries, int flowsize){
 
 	(*table)->n_elements = 0;
 	(*table)->max_elements = nentries;
+	(*table)->flow_size = flowsize;
 	(*table)->in = (index_table_t*) malloc(sizeof(index_table_t));
 	(*table)->fl = (entry_table_t*) malloc(  sizeof(entry_table_t) +   (sizeof(flow_node_t) + flowsize - 1)*nentries );
 
@@ -40,6 +41,7 @@ int insert_element(flow_table_t *table, void* element, int size, uint32_t (*hash
 
 	if (line->busy == 0){
 
+		printf("%d First element\n", index);
 		choice = 'I';
 
 	} else {
@@ -69,6 +71,8 @@ int insert_element(flow_table_t *table, void* element, int size, uint32_t (*hash
 	switch( choice ){
 		case 'U' :
 		{
+
+			LOG("UPDATE\n");
 			/* Update case */
 			flow_node_t *last = NODE_POINTER(table->fl->payload, table->fl->last, size);
 			flow_node_t *first = last->previous;
@@ -78,9 +82,9 @@ int insert_element(flow_table_t *table, void* element, int size, uint32_t (*hash
 				return 1;
 			}
 
-			if ( OFFSET(table->fl->payload, flow) == table->fl->last){
+			if ( OFFSET(table->fl->payload, flow, table->flow_size) == table->fl->last){
 				//printf("Moving last...\n");
-				table->fl->last = OFFSET(table->fl->payload, flow->next);
+				table->fl->last = OFFSET(table->fl->payload, flow->next, table->flow_size);
 			} else {
 				//printf("Last: %p, First: %p, Current: %p\n", last, first, flow);
 				flow->previous->next = flow->next;
@@ -98,6 +102,7 @@ int insert_element(flow_table_t *table, void* element, int size, uint32_t (*hash
 
 		default :
 		{
+			LOG("INSERT\n");
 			/* The default case is insert */
 			line->slot[ line->busy ].hash = h;
 			line->slot[ line->busy ].time_stamp = 0;
@@ -108,8 +113,16 @@ int insert_element(flow_table_t *table, void* element, int size, uint32_t (*hash
 			flow->flow_hash = h;
 			memcpy(flow->payload, element, size);
 
+			LOG("%p, last: %d\n", flow, table->fl->last);
+			LOG("Diff: %p - %p = %d\n",  flow->next, table->fl->payload,   ( (uint8_t*)flow->next) -(uint8_t*)table->fl->payload   );
+			LOG("CALCULATED: %ld\n", sizeof(flow_node_t)-1+ table->flow_size );
+
+
 			line->busy = INCREMENT(line->busy, NUM_SLOTS);
-			table->fl->last = OFFSET( table->fl->payload, flow->next );
+			table->fl->last = OFFSET( table->fl->payload, flow->next, table->flow_size);
+			LOG("NEW LAST: %ld\n", table->fl->last);
+
+
 
 			if (table->n_elements != table->max_elements){
 				table->n_elements++;
