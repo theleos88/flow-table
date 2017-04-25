@@ -22,6 +22,8 @@ int create_table(flow_table_t **table, int nentries, int flowsize){
 		flow_node_t *n = NODE_POINTER((*table)->fl->payload, i, flowsize );
 		n->next = NODE_POINTER((*table)->fl->payload, INCREMENT(i, nentries) , flowsize );
 		n->previous = NODE_POINTER((*table)->fl->payload, DECREMENT(i, nentries) , flowsize );
+		n->notvalid = 0;
+		n->flow_hash = 0;
 	}
 
 	return 1;
@@ -92,20 +94,23 @@ int insert_element(flow_table_t *table, void* element, int size, uint32_t (*hash
 				first->next = flow;
 				last->previous = flow;
 			}
+			flow->notvalid = 0;
 
 			break;
 		}
 
 		default :
 		{
+
 			/* The default case is insert */
 			line->slot[ line->busy ].hash = h;
-			line->slot[ line->busy ].time_stamp = 0;
+			line->slot[ line->busy ].v_q = 0;
 			line->slot[ line->busy ].index = table->fl->last;
 
 			//printf("Put element at %d, last %d\n", line->busy, table->fl->last);
 			flow_node_t *flow = NODE_POINTER( table->fl->payload, line->slot[ line->busy ].index, size );
 			flow->flow_hash = h;
+			flow->notvalid = 0;
 			memcpy(flow->payload, element, size);
 
 			line->busy = INCREMENT(line->busy, NUM_SLOTS);
@@ -121,4 +126,67 @@ int insert_element(flow_table_t *table, void* element, int size, uint32_t (*hash
 	}
 
 	return 0;
+}
+
+
+flow_node_t *remove_first(flow_table_t *table){
+		flow_node_t *last = NODE_POINTER(table->fl->payload, table->fl->last, table->flow_size);
+
+		if (table->n_elements > 0){
+
+			while(last->previous->notvalid){
+				last = last->previous;
+			}	
+			table->fl->last = OFFSET(table->fl->payload, last->previous, table->flow_size);
+			table->n_elements--;
+			return last->previous;
+		} else {
+			//Empty flow table
+			return NULL;
+		}
+}
+
+int delete_element(flow_table_t *table, void* element ){
+	if(table->n_elements == 0){
+		return 0;
+	}
+
+	//int node_offset = OFFSET(table->fl->payload, (uint8_t*)element, table->flow_size);
+	flow_node_t *last = NODE_POINTER(table->fl->payload, table->fl->last, table->flow_size);
+	flow_node_t *first = last->previous;
+	flow_node_t *remove = (flow_node_t*)element;
+
+	if (last == remove || first == remove){
+		//remove->notvalid=1;
+		table->fl->last = OFFSET(table->fl->payload, remove, table->flow_size);
+	} else {
+		remove->notvalid=1;
+	}
+	//flow_node_t *remove = NODE_POINTER(table->fl->payload, table->fl->last, table->flow_size);
+}
+
+flow_node_t *remove_element_at_position(flow_table_t *table, int pos ){
+	if(table->n_elements == 0 || pos > table->max_elements){
+		return NULL;
+	}
+
+	if (table->fl->last == pos ){
+		return NULL;
+	} else {
+		flow_node_t *node = NODE_POINTER(table->fl->payload, pos, table->flow_size);
+		flow_node_t *last = NODE_POINTER(table->fl->payload, table->fl->last, table->flow_size);
+
+		if (node->notvalid == 0){
+
+			if (last->previous == node){				
+				table->fl->last = OFFSET(table->fl->payload, last->previous, table->flow_size);				
+			}
+
+			node->notvalid=1;
+			table->n_elements --;			
+			return node;
+		} else {
+			return NULL;
+		}
+	}
 }

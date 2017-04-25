@@ -10,8 +10,8 @@
 /*******   MACRO          *****/
 
 #define NODE_POINTER(base, i, size)  ( ((flow_node_t*) ((uint8_t*)(base) + i*(size + sizeof(flow_node_t)-1 ))) )
-//#define OFFSET(startptr, offptr) (  ((int) ((uint8_t*)offptr - (uint8_t*)startptr))/sizeof(uint8_t*)   )
-#define OFFSET(startptr, offptr, flowsize) (( (int)  ( ((uint8_t*)(offptr) - (uint8_t*)(startptr)))/(sizeof(flow_node_t)-1+ flowsize )  ))
+//#define OFF_FORMULA(flowsize) ((sizeof(flow_node_t)-1+ flowsize ))
+#define OFFSET(startptr, offptr, flowsize) (( (int)  ( ((uint8_t*)(offptr) - (uint8_t*)(startptr)))/((sizeof(flow_node_t))-1+ (flowsize) )  ))
 
 
 #define INCREMENT(i, max_value) ( (i+1) % max_value )
@@ -30,7 +30,7 @@
 typedef struct _index_n{
 	uint32_t hash;
 	uint32_t index;
-	uint32_t time_stamp;
+	uint32_t v_q;
 }index_node_t;
 
 typedef struct _index_l{
@@ -42,6 +42,7 @@ typedef index_line_t index_table_t[MAX_NUM_FLOWS];
 
 typedef struct _flow_t{
 	uint32_t flow_hash;
+	uint8_t notvalid;
 	struct _flow_t *next;
 	struct _flow_t *previous;
 	uint8_t payload[1];
@@ -63,6 +64,10 @@ typedef struct _general{
 
 int create_table(flow_table_t **table, int nentries, int flowsize);
 int insert_element(flow_table_t *table, void* element, int size, uint32_t (*hash)(uint8_t*, int)  );
+int delete_element(flow_table_t *table, void* element );
+flow_node_t *remove_element_at_position(flow_table_t *table, int pos);
+flow_node_t *remove_first(flow_table_t *table);
+
 
 //int init_table(uint32_t index_table[], flow_table_t *fw, int size, int elems);
 //int show_table(flow_table_t *fw, int size);
