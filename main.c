@@ -4,9 +4,9 @@
 typedef struct n{
 	uint32_t ipsrc;
 	uint32_t ipdst;
-	uint32_t prtsrc;
-	uint32_t prtdst;
-	uint32_t type;
+	uint16_t prtsrc;
+	uint16_t prtdst;
+	uint8_t type;
 } flow_t;
 
 uint32_t hash(uint8_t *elem, int size){
@@ -30,7 +30,7 @@ int print_test_data(flow_table_t *t){
 	for (int i=0; i<line->busy; i++){
 		printf("Hash: %08x\n", line->slot[i].hash);
 		printf("Index: %d\n", line->slot[i].index);
-		printf("TS: %08x\n", line->slot[i].time_stamp);
+		printf("TS: %08x\n", line->slot[i].v_q);
 
 		int ref = line->slot[i].index;
 
@@ -42,16 +42,28 @@ int print_test_data(flow_table_t *t){
 }
 
 int print_table(flow_table_t *table){
-	printf("ELEMENTS: %d\n", table->n_elements);
-	printf("___\n");
 	flow_node_t *node = NODE_POINTER(table->fl->payload, table->fl->last, sizeof(flow_t) );
+	int first = OFFSET(table->fl->payload, node->previous, table->flow_size);
+	printf("\n\n*********\nELEMENTS: %d\n", table->n_elements);
+	printf("LAST: %d - Addr: %p\n", table->fl->last, node);
+	printf("FIRST: %d - Addr: %p\n", first, node->previous);
+	printf("___\n");
 	node = node->previous;
 
-	for (int i=0; i<table->n_elements; i++){
+	int i=table->n_elements;
+	while(i>0){
+		if (node->notvalid){
+			printf("---skipping invalidated node...\n");
+			node = node->previous;
+			continue;
+		}
+
 		flow_t t = *(flow_t*)(node->payload);
-		LOG("NODE: %p *** ", node);
+		int pos = OFFSET(table->fl->payload, node->payload, table->flow_size);
+		LOG("POS: %d - NODE: %p *** ", pos, node);
 		print_structure(t);
 		node = node->previous;
+		i--;
 	}
 	printf("____\n\n");
 
@@ -102,18 +114,101 @@ int main(int argc, char** argv){
 			
 
 	print_graph_list(flowtable);
-	for (int i=0; i<MAX_NUM_FLOWS - 1 ; i++) {
+	for (int i=0; i<20 - 1 ; i++) {
 		printf("Step %d\n", i);
 		f1.ipsrc=i*100+1;
 		f1.ipdst=i*200+2;
 		f1.type=(i)%11;
 
-		uint32_t h = hash(&f1, sizeof(f1))%flowtable->max_elements;
+		uint32_t h = hash( (uint8_t*)(&f1), sizeof(f1))%flowtable->max_elements;
 		printf("Insert at %u\n", h);
 		insert_element(flowtable, &f1, sizeof(flow_t), &hash);
 		assert( flowtable->n_elements == (i+1) || flowtable->n_elements == flowtable->max_elements );
 		print_table(flowtable);
 
 	}
+
+	for (int i=0; i<11 ; i++) {
+		printf("Remove first\n");
+		flow_node_t *fl = remove_first(flowtable);
+		if (fl != NULL){
+			flow_t my_fl = *((flow_t*)(fl->payload));		
+			print_structure(my_fl);
+		} else {
+			printf("Empty flow table\n");
+		}
+		//assert( flowtable->n_elements == (i+1) || flowtable->n_elements == flowtable->max_elements );
+		print_table(flowtable);
+
+	}
+
+	print_graph_list(flowtable);
+	for (int i=0; i<20 - 1 ; i++) {
+		printf("Step %d\n", i);
+		f1.ipsrc=i*100+1;
+		f1.ipdst=i*200+2;
+		f1.type=(i)%11;
+
+		uint32_t h = hash( (uint8_t*)(&f1), sizeof(f1))%flowtable->max_elements;
+		printf("Insert at %u\n", h);
+		insert_element(flowtable, &f1, sizeof(flow_t), &hash);
+		assert( flowtable->n_elements == (i+1) || flowtable->n_elements == flowtable->max_elements );
+		print_table(flowtable);
+
+	}
+
+	for (int i=0; i<11 ; i++) {
+		int a = (i+rand())%10;
+		printf("Remove random element%d\n", a);
+		flow_node_t *fl = remove_element_at_position(flowtable, a);
+		if (fl != NULL){
+			flow_t my_fl = *((flow_t*)(fl->payload));		
+			print_structure(my_fl);
+		} else {
+			printf("Empty flow table\n");
+		}
+		//assert( flowtable->n_elements == (i+1) || flowtable->n_elements == flowtable->max_elements );
+		print_table(flowtable);
+
+	}
+
+	flow_node_t *fff = remove_first(flowtable);
+	if (fff != NULL){
+		flow_t my_fl1 = *((flow_t*)(fff->payload));	
+		printf("Removed: \n");
+		print_structure(my_fl1);
+	}
+	fff = remove_first(flowtable);
+	if (fff != NULL){
+		flow_t my_fl1 = *((flow_t*)(fff->payload));		
+		printf("Removed: \n");
+		print_structure(my_fl1);
+	}
+	print_table(flowtable);
+
+	fff = remove_first(flowtable);
+	if (fff != NULL){
+		flow_t my_fl1 = *((flow_t*)(fff->payload));		
+		printf("Removed: \n");
+		print_structure(my_fl1);
+	}
+	print_table(flowtable);
+
+	fff = remove_first(flowtable);
+	if (fff != NULL){
+		flow_t my_fl1 = *((flow_t*)(fff->payload));		
+		printf("Removed: \n");
+		print_structure(my_fl1);
+	}
+	print_table(flowtable);
+
+	fff = remove_first(flowtable);
+	if (fff != NULL){
+		flow_t my_fl1 = *((flow_t*)(fff->payload));		
+		printf("Removed: \n");
+		print_structure(my_fl1);
+	}
+	print_table(flowtable);
+
 
 }
