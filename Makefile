@@ -61,6 +61,9 @@ run: example
 	./$< $(LNAME)
 
 install: shared
-	mkdir -p $(INCLUDEDIR)/flow_table
-	cp $(hdir)/* $(INCLUDEDIR)/flow_table
-	cp $(ldir)/*.so $(LIBDIR)
+	cp $(hdir)/flow_table.h $(INCLUDEDIR)/
+	cp $(ldir)/$(libshared) $(LIBDIR)/
+
+remove:
+	rm -f $(INCLUDEDIR)/flow_table.h
+	rm -f $(LIBDIR)/$(libshared)
