@@ -41,7 +41,7 @@ typedef struct _index_l{
 typedef index_line_t index_table_t[MAX_NUM_FLOWS];
 
 typedef struct _flow_t{
-	uint32_t flow_hash;
+	uint16_t flow_pos[2];
 	uint8_t notvalid;
 	struct _flow_t *next;
 	struct _flow_t *previous;

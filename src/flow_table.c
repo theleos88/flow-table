@@ -23,7 +23,8 @@ int create_table(flow_table_t **table, int nentries, int flowsize){
 		n->next = NODE_POINTER((*table)->fl->payload, INCREMENT(i, nentries) , flowsize );
 		n->previous = NODE_POINTER((*table)->fl->payload, DECREMENT(i, nentries) , flowsize );
 		n->notvalid = 0;
-		n->flow_hash = 0;
+		n->flow_pos[0] = 0;
+		n->flow_pos[1] = 0;
 	}
 
 	return 1;
@@ -109,7 +110,8 @@ int insert_element(flow_table_t *table, void* element, int size, uint32_t (*hash
 
 			//printf("Put element at %d, last %d\n", line->busy, table->fl->last);
 			flow_node_t *flow = NODE_POINTER( table->fl->payload, line->slot[ line->busy ].index, size );
-			flow->flow_hash = h;
+			flow->flow_pos[0] = table->fl->last;
+			flow->flow_pos[1] = line->busy;
 			flow->notvalid = 0;
 			memcpy(flow->payload, element, size);
 
