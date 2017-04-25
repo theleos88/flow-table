@@ -6,8 +6,9 @@ hdir = $(shell pwd)/hdr
 odir = $(shell pwd)/obj
 ldir = $(shell pwd)/lib
 
-libname = $(ldir)/libflowtable.a
-libshared = $(ldir)/libflowtable.so
+libname = libflowtable
+libstatic = $(ldir)/$(libname).a
+libshared = $(ldir)/$(libname).so
 
 INCLUDEDIR = /usr/local/include
 LIBDIR = /usr/local/lib
@@ -24,9 +25,9 @@ DEBUG = -ggdb -g
 MAIN = main.c
 export LD_LIBRARY_PATH=$(ldir)
 
-$(libname): $(obj)
+$(libstatic): $(obj)
 	$(AR) rc $@ $^
-	ranlib $(libname)
+	ranlib $(libstatic)
 
 #$(obj): | objd
 
@@ -62,8 +63,8 @@ run: example
 
 install: shared
 	cp $(hdir)/flow_table.h $(INCLUDEDIR)/
-	cp $(ldir)/$(libshared) $(LIBDIR)/
+	cp $(ldir)/$(libname).so $(LIBDIR)/
 
 remove:
 	rm -f $(INCLUDEDIR)/flow_table.h
-	rm -f $(LIBDIR)/$(libshared)
+	rm -f $(LIBDIR)/$(libname).so
