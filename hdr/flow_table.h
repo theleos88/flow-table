@@ -67,6 +67,7 @@ int insert_element(flow_table_t *table, void* element, int size, uint32_t (*hash
 int delete_element(flow_table_t *table, void* element );
 flow_node_t *remove_element_at_position(flow_table_t *table, int pos);
 flow_node_t *remove_first(flow_table_t *table);
+flow_node_t *get_first_ptr(flow_table_t *table);
 
 
 //int init_table(uint32_t index_table[], flow_table_t *fw, int size, int elems);

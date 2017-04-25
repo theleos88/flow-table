@@ -148,6 +148,21 @@ flow_node_t *remove_first(flow_table_t *table){
 		}
 }
 
+flow_node_t *get_first_ptr(flow_table_t *table){
+		flow_node_t *last = NODE_POINTER(table->fl->payload, table->fl->last, table->flow_size);
+
+		if (table->n_elements > 0){
+
+			while(last->previous->notvalid){
+				last = last->previous;
+			}
+			return last->previous;
+		} else {
+			//Empty flow table
+			return NULL;
+		}
+}
+
 int delete_element(flow_table_t *table, void* element ){
 	if(table->n_elements == 0){
 		return 0;
